@@ -223,7 +223,7 @@ export type AppearanceType = 'light' | 'dark';
 /**
  * Application color scheme type
  */
-export type AppearanceSchemeType = 'client_light' | 'client_dark' | 'space_gray' | 'bright_light';
+export type AppearanceSchemeType = 'vkcom_light' | 'vkcom_dark' | 'space_gray' | 'bright_light';
 
 /**
  * Vibration type for Taptic Engine
@@ -303,40 +303,46 @@ export type Insets = {
   bottom: number;
 };
 
-/**
- * Update config type for mvk (mobile browser).
- */
-export type MVKUpdateConfigData = {
-  /** Server API host for direct requests. */
+/** Default fields for config response on all platforms */
+export type DefaultUpdateConfigData = {
   api_host: string;
+  /** App_id of opened app */
+  app_id: string;
+  /** Native app appearance */
+  appearance: AppearanceType;
+  /** Native app scheme */
   scheme: AppearanceSchemeType;
 };
 
-export type VKUpdateConfigData = {
-  /** Server API host for direct requests. */
-  api_host: string;
+/** Config response for native platforms */
+export type MobileUpdateConfigData = DefaultUpdateConfigData & {
+  /** Client type */
+  app: 'vkclient' | 'vkme';
+  /** Safe area insets. iOS only */
+  insets?: Insets;
+};
+
+/** Config response for m.vk.com and vk.com */
+export type SharedUpdateConfigData = DefaultUpdateConfigData & {
   /** window.innerWidth of the parent window */
   viewport_width: number;
   /** window.innerHeight of the parent window */
   viewport_height: number;
-  scheme: AppearanceSchemeType;
+  /** Server API host for direct requests. */
+  api_host: string;
 };
 
-/**
- * Update config type data for mobile clients and desktop.
- */
-export type DefaultUpdateConfigData = {
-  app: 'vkclient' | 'vkme';
-  app_id: string;
-  appearance: AppearanceType;
-  scheme: AppearanceSchemeType;
-  insets: Insets;
+/** Config response for m.vk.com (mobile browser) */
+export type MVKUpdateConfigData = SharedUpdateConfigData;
+
+/** Config response for vk.com (full web) */
+export type VKUpdateConfigData = SharedUpdateConfigData & {
+  /** Is app opened in layer */
+  is_layer: boolean;
 };
 
-/**
- * Update config data
- */
-export type UpdateConfigData = DefaultUpdateConfigData | MVKUpdateConfigData | VKUpdateConfigData;
+/** Update config data */
+export type ParentConfigData = MobileUpdateConfigData | MVKUpdateConfigData | VKUpdateConfigData;
 
 export type WidgetPreviewRequestOptions = {
   /** Widget type */
@@ -383,8 +389,19 @@ export type MessageRequestOptions = {
   lng?: number;
 };
 
-export type NativeAdsOptions = {
-  ad_format: 'preloader' | 'reward' | 'interstitial';
+export enum EAdsFormats {
+  REWARD = 'reward',
+  INTERSTITIAL = 'interstitial',
+}
+
+export type ShowNativeAdsRequest = {
+  ad_format: EAdsFormats;
+  use_waterfall?: boolean;
+};
+
+export type CheckNativeAdsRequest = {
+  ad_format: EAdsFormats;
+  use_waterfall?: boolean;
 };
 
 export type OrderRequestOptions = {
@@ -831,51 +848,138 @@ export type VKWebAppCheckAllowedScopesResponseEntry = {
   allowed: boolean;
 };
 
+export enum EGrantedPermission {
+  CAMERA = 'camera',
+  LOCATION = 'location',
+  PHOTO = 'photo',
+}
+
+export type GetGrantedPermissionsResponse = {
+  permissions: EGrantedPermission[];
+};
+
+export type CreateHashRequest = {
+  payload?: string;
+};
+
+export type CreateHashResponse = {
+  ts: number;
+  hash: string;
+  payload?: string;
+};
+
+export type ChangeFragmentResponse = {
+  location: string;
+};
+
+export enum EGetLaunchParamsResponseLanguages {
+  RU = 'ru',
+  UK = 'uk',
+  UA = 'ua',
+  EN = 'en',
+  BE = 'be',
+  KZ = 'kz',
+  PT = 'pt',
+  ES = 'es',
+}
+
+export enum EGetLaunchParamsResponseGroupRole {
+  ADMIN = 'admin',
+  EDITOR = 'editor',
+  MEMBER = 'member',
+  MODER = 'moder',
+  NONE = 'none',
+}
+
+export enum EGetLaunchParamsResponsePlatforms {
+  DESKTOP_WEB = 'desktop_web',
+  MOBILE_WEB = 'mobile_web',
+  MOBILE_ANDROID = 'mobile_android',
+  MOBILE_ANDROID_MESSENGER = 'mobile_android_messenger',
+  MOBILE_IPHONE = 'mobile_iphone',
+  MOBILE_IPHONE_MESSENGER = 'mobile_iphone_messenger',
+  MOBILE_IPAD = 'mobile_ipad',
+}
+
+export type GetLaunchParamsResponse = {
+  vk_user_id: number;
+  vk_app_id: number;
+  vk_is_app_user: 0 | 1;
+  vk_are_notifications_enabled: 0 | 1;
+  vk_language: EGetLaunchParamsResponseLanguages;
+  vk_ref: string;
+  vk_access_token_settings: string;
+  vk_group_id?: number;
+  vk_viewer_group_role?: EGetLaunchParamsResponseGroupRole;
+  vk_platform: EGetLaunchParamsResponsePlatforms;
+  vk_is_favorite: 0 | 1;
+  vk_ts: number;
+  sign: string;
+};
+
+export type ConversionHitRequest = {
+  pixel_code: string;
+  conversion_event: string;
+  conversion_value: number;
+};
+
+export type ConversionHitResponse = {
+  result: true;
+};
+
 export type VKWebAppShowOrderBoxResponse = {
   status: OrderBoxShowingStatus;
   order_id: string;
+};
+
+export type ScrollTopResponse = {
+  scrollTop: number;
 };
 
 /**
  * Map of types of request props of VK Bridge methods
  */
 export type RequestPropsMap = {
-  VKWebAppInit: Record<string, never>;
-  VKWebAppAddToCommunity: Record<string, never>;
-  VKWebAppAddToHomeScreen: Record<string, never>;
-  VKWebAppAddToHomeScreenInfo: Record<string, never>;
+  VKWebAppInit: Record<string, unknown>;
+  VKWebAppAddToCommunity: Record<string, unknown>;
+  VKWebAppAddToHomeScreen: Record<string, unknown>;
+  VKWebAppAddToHomeScreenInfo: Record<string, unknown>;
   VKWebAppAllowMessagesFromGroup: { group_id: number; key?: string };
-  VKWebAppAllowNotifications: Record<string, never>;
+  VKWebAppAllowNotifications: Record<string, unknown>;
   OKWebAppCallAPIMethod: { method: string; params: OKCallApiParams };
   VKWebAppCallAPIMethod: { method: string; params: Record<'access_token' | 'v', string> & Record<string, string | number> };
   VKWebAppCopyText: { text: string };
+  VKWebAppCreateHash: CreateHashRequest;
   VKWebAppDownloadFile: { url: string; filename: string };
   VKWebAppGetAuthToken: { app_id: number; scope: PersonalAuthScope | string };
   VKWebAppClose: { status: AppCloseStatus; payload?: any };
   VKWebAppOpenApp: { app_id: number; location?: string };
-  VKWebAppDenyNotifications: Record<string, never>;
-  VKWebAppFlashGetInfo: Record<string, never>;
+  VKWebAppDenyNotifications: Record<string, unknown>;
+  VKWebAppFlashGetInfo: Record<string, unknown>;
   VKWebAppFlashSetLevel: { level: number };
-  VKWebAppGetClientVersion: Record<string, never>;
+  VKWebAppGetClientVersion: Record<string, unknown>;
   VKWebAppGetCommunityToken: CommunityTokenRequestOptions;
-  VKWebAppAudioPause: Record<string, never>;
-  VKWebAppGetEmail: Record<string, never>;
+  VKWebAppGetConfig: Record<string, unknown>;
+  VKWebAppGetLaunchParams: Record<string, unknown>;
+  VKWebAppAudioPause: Record<string, unknown>;
+  VKWebAppGetEmail: Record<string, unknown>;
   VKWebAppGetFriends: { multi?: boolean };
-  VKWebAppGetGeodata: Record<string, never>;
+  VKWebAppGetGeodata: Record<string, unknown>;
+  VKWebAppGetGrantedPermissions: Record<string, unknown>;
   VKWebAppGetPersonalCard: { type: PersonalCardType[] };
-  VKWebAppGetPhoneNumber: Record<string, never>;
+  VKWebAppGetPhoneNumber: Record<string, unknown>;
   VKWebAppGetUserInfo: { user_id?: number };
   VKWebAppJoinGroup: { group_id: number };
   VKWebAppLeaveGroup: { group_id: number };
-  VKWebAppAddToMenu: Record<string, never>;
-  VKWebAppOpenCodeReader: Record<string, never>;
-  VKWebAppOpenContacts: Record<string, never>;
+  VKWebAppAddToMenu: Record<string, unknown>;
+  VKWebAppOpenCodeReader: Record<string, unknown>;
+  VKWebAppOpenContacts: Record<string, unknown>;
   VKWebAppOpenPayForm: VKPayProps<VKPayActionType>;
-  VKWebAppOpenQR: Record<string, never>;
+  VKWebAppOpenQR: Record<string, unknown>;
   VKWebAppResizeWindow: { width: number; height?: number };
   VKWebAppScroll: { top: number; speed?: number };
   VKWebAppSendToClient: { fragment?: string };
-  VKWebAppSetLocation: { location: string };
+  VKWebAppSetLocation: { location: string; replace_state?: boolean };
   VKWebAppSetViewSettings: {
     status_bar_style: AppearanceType;
     /** Android only */
@@ -886,10 +990,11 @@ export type RequestPropsMap = {
   VKWebAppShare: { link?: string };
   VKWebAppShowCommunityWidgetPreviewBox: WidgetPreviewRequestOptions;
   VKWebAppShowImages: { images: string[]; start_index?: number };
-  VKWebAppShowInviteBox: Record<string, never>;
+  VKWebAppShowInviteBox: Record<string, unknown>;
   VKWebAppShowLeaderBoardBox: { user_result: number };
   VKWebAppShowMessageBox: MessageRequestOptions;
-  VKWebAppShowNativeAds: NativeAdsOptions;
+  VKWebAppShowNativeAds: ShowNativeAdsRequest;
+  VKWebAppCheckNativeAds: CheckNativeAdsRequest;
   VKWebAppShowOrderBox: OrderRequestOptions;
   VKWebAppShowRequestBox: RequestForRequestOptions;
   VKWebAppShowWallPostBox: WallPostRequestOptions;
@@ -899,25 +1004,31 @@ export type RequestPropsMap = {
   VKWebAppStorageSet: { key: string; value: string };
   VKWebAppTapticImpactOccurred: { style: TapticVibrationPowerType };
   VKWebAppTapticNotificationOccurred: { type: TapticNotificationType };
-  VKWebAppTapticSelectionChanged: Record<string, never>;
-  VKWebAppAddToFavorites: Record<string, never>;
+  VKWebAppTapticSelectionChanged: Record<string, unknown>;
+  VKWebAppAddToFavorites: Record<string, unknown>;
   VKWebAppSendPayload: { group_id: number; payload: any };
-  VKWebAppDisableSwipeBack: Record<string, never>;
-  VKWebAppEnableSwipeBack: Record<string, never>;
+  VKWebAppDisableSwipeBack: Record<string, unknown>;
+  VKWebAppEnableSwipeBack: Record<string, unknown>;
   VKWebAppSetSwipeSettings: { history: boolean };
   VKWebAppShowStoryBox: ShowStoryBoxOptions;
   VKWebAppAccelerometerStart: { refresh_rate?: string };
-  VKWebAppAccelerometerStop: Record<string, never>;
-  VKWebAppGyroscopeStart: Record<string, never>;
-  VKWebAppGyroscopeStop: Record<string, never>;
-  VKWebAppDeviceMotionStart: Record<string, never>;
-  VKWebAppDeviceMotionStop: Record<string, never>;
+  VKWebAppAccelerometerStop: Record<string, unknown>;
+  VKWebAppGyroscopeStart: Record<string, unknown>;
+  VKWebAppGyroscopeStop: Record<string, unknown>;
+  VKWebAppDeviceMotionStart: Record<string, unknown>;
+  VKWebAppDeviceMotionStop: Record<string, unknown>;
   VKWebAppSubscribeStoryApp: SubscribeStoryAppOptions;
   VKWebAppGetGroupInfo: { group_id: number };
   VKWebAppLibverifyRequest: { phone: string };
   VKWebAppLibverifyCheck: { code: string };
   VKWebAppRetargetingPixel: RetargetingPixelOptions;
   VKWebAppCheckAllowedScopes: { scopes: string };
+  VKWebAppConversionHit: ConversionHitRequest;
+  VKWebAppCheckSurvey: Record<string, unknown>;
+  VKWebAppShowSurvey: Record<string, unknown>;
+  VKWebAppScrollTop: Record<string, unknown>;
+  VKWebAppScrollTopStart: Record<string, unknown>;
+  VKWebAppScrollTopStop: Record<string, unknown>;
 };
 
 /**
@@ -933,6 +1044,7 @@ export type ReceiveDataMap = {
   OKWebAppCallAPIMethod: { response: any };
   VKWebAppCallAPIMethod: { response: any };
   VKWebAppCopyText: { result: true };
+  VKWebAppCreateHash: CreateHashResponse;
   VKWebAppDownloadFile: { result: true };
   VKWebAppGetAuthToken: { access_token: string; scope: string };
   VKWebAppClose: { payload: any };
@@ -944,6 +1056,7 @@ export type ReceiveDataMap = {
   VKWebAppGetEmail: { email: string; sign: string };
   VKWebAppGetFriends: { users: UserGetFriendsFriend[] };
   VKWebAppGetGeodata: { available: 0 } | { available: 1; lat: number; long: number; accuracy: number };
+  VKWebAppGetGrantedPermissions: GetGrantedPermissionsResponse;
   VKWebAppGetPersonalCard: PersonalCardData;
   VKWebAppGetPhoneNumber: { phone_number: string; sign: string; is_verified: boolean };
   VKWebAppGetUserInfo: UserInfo;
@@ -966,6 +1079,7 @@ export type ReceiveDataMap = {
   VKWebAppShowLeaderBoardBox: { success: boolean };
   VKWebAppShowMessageBox: { result: true };
   VKWebAppShowNativeAds: { result: true };
+  VKWebAppCheckNativeAds: { result: boolean };
   VKWebAppShowOrderBox: VKWebAppShowOrderBoxResponse;
   VKWebAppShowRequestBox: RequestResult;
   VKWebAppShowWallPostBox: { post_id: number | string };
@@ -978,18 +1092,20 @@ export type ReceiveDataMap = {
   VKWebAppTapticSelectionChanged: { result: true };
   VKWebAppAddToFavorites: { result: true };
   VKWebAppSendPayload: { result: true };
-  VKWebAppGetCommunityToken: { access_token: string };
+  VKWebAppGetCommunityToken: { access_token: string; scope: string };
   VKWebAppAudioPause: { result: true };
   VKWebAppAudioPaused: { position: number; type: string; id: string };
-  VKWebAppAudioStopped: Record<string, never>; // Always empty
+  VKWebAppAudioStopped: Record<string, unknown>; // Always empty
   VKWebAppAudioTrackChanged: { type: string; id: string };
   VKWebAppAudioUnpaused: { type: string; id: string };
   VKWebAppInitAds: { init: 'true' | 'false' };
   VKWebAppLoadAds: { load: 'true' | 'false' };
-  VKWebAppUpdateConfig: UpdateConfigData;
+  VKWebAppUpdateConfig: ParentConfigData;
+  VKWebAppGetConfig: ParentConfigData;
+  VKWebAppGetLaunchParams: GetLaunchParamsResponse;
   VKWebAppUpdateInsets: { insets: Insets };
-  VKWebAppViewHide: Record<string, never>; // Always empty
-  VKWebAppViewRestore: Record<string, never>; // Always empty
+  VKWebAppViewHide: Record<string, unknown>; // Always empty
+  VKWebAppViewRestore: Record<string, unknown>; // Always empty
   VKWebAppDisableSwipeBack: { result: true };
   VKWebAppEnableSwipeBack: { result: true };
   VKWebAppSetSwipeSettings: { result: true };
@@ -1010,12 +1126,22 @@ export type ReceiveDataMap = {
   VKWebAppLibverifyOnFailed: { code: VKWebAppLibverifyOnFailedCode };
   VKWebAppRetargetingPixel: { result: true };
   VKWebAppCheckAllowedScopes: { result: VKWebAppCheckAllowedScopesResponseEntry[] };
+  VKWebAppChangeFragment: ChangeFragmentResponse;
+  VKWebAppConversionHit: ConversionHitResponse;
+  VKWebAppCheckSurvey: { result: boolean };
+  VKWebAppShowSurvey: { result: boolean };
+  VKWebAppScrollTop: ScrollTopResponse;
+  VKWebAppScrollTopStart: { result: true };
+  VKWebAppScrollTopStop: { result: true };
 };
 
-export type VKBridgeMethod<M extends string> = keyof RequestPropsMap | M;
+export type VKBridgeMethod<M extends string> = M extends keyof RequestPropsMap ? M : string;
 export type VKBridgeMethodParams<M> = M extends keyof RequestPropsMap ? RequestPropsMap[M] : Record<string, unknown>;
 export type VKBridgeMethodResult<M> = M extends keyof ReceiveDataMap ? ReceiveDataMap[M] : Record<string, unknown>;
-export type VKBridgeSend = <M extends string>(method: VKBridgeMethod<M>, params?: VKBridgeMethodParams<M>) => Promise<VKBridgeMethodResult<M>>;
+export type VKBridgeSend = <M extends keyof RequestPropsMap>(
+  method: VKBridgeMethod<M>,
+  params?: VKBridgeMethodParams<M>
+) => Promise<VKBridgeMethodResult<M>>;
 
 /**
  * Client error data.
@@ -1095,6 +1221,7 @@ type AnyMapEvent =
   MapEvent<'OKWebAppCallAPIMethod', 'OKWebAppCallAPIMethodResult', 'OKWebAppCallAPIMethodFailed'> &
   MapEvent<'VKWebAppCallAPIMethod', 'VKWebAppCallAPIMethodResult', 'VKWebAppCallAPIMethodFailed'> &
   MapEvent<'VKWebAppCopyText', 'VKWebAppCopyTextResult', 'VKWebAppCopyTextFailed'> &
+  MapEvent<'VKWebAppCreateHash', 'VKWebAppCreateHashResult', 'VKWebAppCreateHashFailed'> &
   MapEvent<'VKWebAppDownloadFile', 'VKWebAppDownloadFileResult', 'VKWebAppDownloadFileFailed'> &
   MapEvent<'VKWebAppGetAuthToken', 'VKWebAppAccessTokenReceived', 'VKWebAppAccessTokenFailed'> &
   MapEvent<'VKWebAppClose', 'VKWebAppCloseResult', 'VKWebAppCloseFailed'> &
@@ -1104,10 +1231,13 @@ type AnyMapEvent =
   MapEvent<'VKWebAppFlashSetLevel', 'VKWebAppFlashSetLevelResult', 'VKWebAppFlashSetLevelFailed'> &
   MapEvent<'VKWebAppGetClientVersion', 'VKWebAppGetClientVersionResult', 'VKWebAppGetClientVersionFailed'> &
   MapEvent<'VKWebAppGetCommunityToken', 'VKWebAppGetCommunityTokenResult', 'VKWebAppGetCommunityTokenFailed'> &
+  MapEvent<'VKWebAppGetConfig', 'VKWebAppGetConfigResult', 'VKWebAppGetConfigFailed'> &
+  MapEvent<'VKWebAppGetLaunchParams', 'VKWebAppGetLaunchParamsResult', 'VKWebAppGetLaunchParamsFailed'> &
   MapEvent<'VKWebAppAudioPause', 'VKWebAppAudioPauseResult', 'VKWebAppAudioPauseFailed'> &
   MapEvent<'VKWebAppGetEmail', 'VKWebAppGetEmailResult', 'VKWebAppGetEmailFailed'> &
   MapEvent<'VKWebAppGetFriends', 'VKWebAppGetFriendsResult', 'VKWebAppGetFriendsFailed'> &
   MapEvent<'VKWebAppGetGeodata', 'VKWebAppGetGeodataResult', 'VKWebAppGetGeodataFailed'> &
+  MapEvent<'VKWebAppGetGrantedPermissions', 'VKWebAppGetGrantedPermissionsResult', 'VKWebAppGetGrantedPermissionsFailed'> &
   MapEvent<'VKWebAppGetPersonalCard', 'VKWebAppGetPersonalCardResult', 'VKWebAppGetPersonalCardFailed'> &
   MapEvent<'VKWebAppGetPhoneNumber', 'VKWebAppGetPhoneNumberResult', 'VKWebAppGetPhoneNumberFailed'> &
   MapEvent<'VKWebAppGetUserInfo', 'VKWebAppGetUserInfoResult', 'VKWebAppGetUserInfoFailed'> &
@@ -1130,6 +1260,7 @@ type AnyMapEvent =
   MapEvent<'VKWebAppShowLeaderBoardBox', 'VKWebAppShowLeaderBoardBoxResult', 'VKWebAppShowLeaderBoardBoxFailed'> &
   MapEvent<'VKWebAppShowMessageBox', 'VKWebAppShowMessageBoxResult', 'VKWebAppShowMessageBoxFailed'> &
   MapEvent<'VKWebAppShowNativeAds', 'VKWebAppShowNativeAdsResult', 'VKWebAppShowNativeAdsFailed'> &
+  MapEvent<'VKWebAppCheckNativeAds', 'VKWebAppCheckNativeAdsResult', 'VKWebAppCheckNativeAdsFailed'> &
   MapEvent<'VKWebAppShowOrderBox', 'VKWebAppShowOrderBoxResult', 'VKWebAppShowOrderBoxFailed'> &
   MapEvent<'VKWebAppShowRequestBox', 'VKWebAppShowRequestBoxResult', 'VKWebAppShowRequestBoxFailed'> &
   MapEvent<'VKWebAppShowWallPostBox', 'VKWebAppShowWallPostBoxResult', 'VKWebAppShowWallPostBoxFailed'> &
@@ -1155,7 +1286,13 @@ type AnyMapEvent =
   MapEvent<'VKWebAppSubscribeStoryApp', 'VKWebAppSubscribeStoryAppResult', 'VKWebAppSubscribeStoryAppFailed'> &
   MapEvent<'VKWebAppGetGroupInfo', 'VKWebAppGetGroupInfoResult', 'VKWebAppGetGroupInfoFailed'> &
   MapEvent<'VKWebAppRetargetingPixel', 'VKWebAppRetargetingPixelResult', 'VKWebAppRetargetingPixelFailed'> &
-  MapEvent<'VKWebAppCheckAllowedScopes', 'VKWebAppCheckAllowedScopesResult', 'VKWebAppCheckAllowedScopesFailed'>;
+  MapEvent<'VKWebAppCheckAllowedScopes', 'VKWebAppCheckAllowedScopesResult', 'VKWebAppCheckAllowedScopesFailed'> &
+  MapEvent<'VKWebAppCheckSurvey', 'VKWebAppCheckSurveyResult', 'VKWebAppCheckSurveyFailed'> &
+  MapEvent<'VKWebAppShowSurvey', 'VKWebAppShowSurveyResult', 'VKWebAppShowSurveyFailed'> &
+  MapEvent<'VKWebAppConversionHit', 'VKWebAppConversionHitResult', 'VKWebAppConversionHitFailed'> &
+  MapEvent<'VKWebAppScrollTop', 'VKWebAppScrollTopResult', 'VKWebAppScrollTopFailed'> &
+  MapEvent<'VKWebAppScrollTopStart', 'VKWebAppScrollTopStartResult', 'VKWebAppScrollTopStop'> &
+  MapEvent<'VKWebAppScrollTopStop', 'VKWebAppScrollTopStopResult', 'VKWebAppScrollTopStopFailed'>;
 
 export type VKBridgeEvent<T extends string = string> = {
   detail: {

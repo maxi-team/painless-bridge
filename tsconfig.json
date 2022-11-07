@@ -24,7 +24,8 @@
     "outDir": "lib"
   },
   "include": [
-    "src/**/*"
+    "src",
+    "vite.config.ts"
   ],
   "exclude": [
     "dist",

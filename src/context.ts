@@ -1,4 +1,4 @@
-import type { VKBridgeContext } from './types/common';
+import type { VKBridgeContext } from './types/common.js';
 
 const fallback: Record<string, unknown> = {};
 const noop = () => { /* noop */ };

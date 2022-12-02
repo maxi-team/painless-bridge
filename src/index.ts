@@ -106,5 +106,6 @@ export type {
   VKBridgeMethodParams,
   VKBridgeMethodResult,
   VKBridgeSend,
-  VKBridgeSubscribeHandler
+  VKBridgeSubscribeHandler,
+  VKBridgeSupports
 } from './types/data.js';

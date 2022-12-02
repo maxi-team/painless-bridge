@@ -1142,6 +1142,9 @@ export type VKBridgeSend = <M extends keyof RequestPropsMap>(
   method: VKBridgeMethod<M>,
   params?: VKBridgeMethodParams<M>
 ) => Promise<VKBridgeMethodResult<M>>;
+export type VKBridgeSupports = <M extends keyof RequestPropsMap>(
+  method: VKBridgeMethod<M>
+) => boolean;
 
 /**
  * Client error data.

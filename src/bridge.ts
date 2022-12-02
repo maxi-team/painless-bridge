@@ -1,5 +1,5 @@
 import type { AnyHandler } from './types/common.js';
-import type { VKBridgeEvent, VKBridgeMethod, VKBridgeSend, VKBridgeSubscribeHandler } from './types/data.js';
+import type { VKBridgeEvent, VKBridgeSend, VKBridgeSubscribeHandler, VKBridgeSupports } from './types/data.js';
 
 import { assertSupport, awaiters, isBridgeError, isBridgeEvent, nextId } from './utils.js';
 import { painless } from './painless.js';
@@ -26,14 +26,14 @@ let target = '';
  * @param method Method (event) name to check.
  * @returns Result of checking.
  */
-const supports = (() => {
+const supports: VKBridgeSupports = (() => {
   if (native) {
-    return <M extends string>(method: VKBridgeMethod<M>) => {
+    return (method: string) => {
       return method in native;
     };
   }
 
-  return <M extends string>(method: VKBridgeMethod<M>) => {
+  return (method: string) => {
     return methods.includes(method);
   };
 })();

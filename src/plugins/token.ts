@@ -42,9 +42,9 @@ const createTokenAwaiter = (params: Record<string, unknown>, resolve: AnyHandler
 };
 
 export const pluginToken = (send: VKBridgeSend): VKBridgeSend => {
-  return (method, params) => {
+  return (method: string, params: Record<string, unknown> = {}) => {
     if (method === 'VKWebAppGetAuthToken' || method === 'VKWebAppGetCommunityToken') {
-      return new Promise((resolve, reject) => {
+      return new Promise<Record<string, unknown>>((resolve, reject) => {
         const safe = Object.assign({ request_id: nextId(), scope: '' }, params);
 
         awaiters.set(safe.request_id, createTokenAwaiter(safe, resolve as AnyHandler, reject));

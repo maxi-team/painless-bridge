@@ -3,9 +3,15 @@ import { dirname } from 'path';
 import { defineConfig } from 'vite';
 import { default as dts } from 'vite-plugin-dts';
 
+let chunks = 1;
+
 export default defineConfig({
   plugins: [
     dts({
+      staticImport: true,
+      clearPureImport: true,
+      entryRoot: './src',
+      include: './src/**/*.{ts,js}',
       beforeWriteFile(filePath, content) {
         promises.mkdir(dirname(filePath), { recursive: true }).then(() => {
           promises.writeFile(
@@ -29,10 +35,17 @@ export default defineConfig({
     outDir: 'lib',
     emptyOutDir: true,
     lib: {
-      entry: 'src/index.ts',
-      name: 'FormatValues',
-      fileName: 'index',
+      entry: {
+        index: './src/index.ts',
+        plugins: './src/plugins/index.ts'
+      },
       formats: ['es', 'cjs']
+    },
+    rollupOptions: {
+      output: {
+        exports: 'named',
+        chunkFileNames: () => chunks-- ? 'shared.mjs' : 'shared.js'
+      }
     },
     target: [
       'firefox55',

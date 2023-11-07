@@ -55,7 +55,13 @@ export const getErrorCode = (unsafe?: Record<string, unknown>): number => {
 };
 
 const isNetworkReason = (msg?: string) => {
-  return msg === 'Network error' || msg === 'Connection lost';
+  if (typeof msg === 'string') {
+    const lower = msg.toLowerCase();
+
+    return lower.includes('network') || lower.includes('connection') || lower.includes('fetch');
+  }
+
+  return false;
 };
 
 const API_DENIED_CODES = [7, 15, 24, 27, 28, 200, 201, 203];
@@ -75,6 +81,14 @@ export const castError = (unsafe?: Record<string, unknown>): ErrorData => {
   const error_reason = getErrorReason(error);
   const error_type = getErrorType(error);
   const error_code = getErrorCode(error);
+
+  if (error_type === 'client_error' && isDeniedByClient(error_code)) {
+    return USER_DENIED;
+  }
+
+  if (error_type === 'api_error' && isDeniedByAPI(error_code)) {
+    return USER_DENIED;
+  }
 
   const error_data = error.error_data;
 
@@ -102,15 +116,7 @@ export const castError = (unsafe?: Record<string, unknown>): ErrorData => {
     msgs.push(error_reason);
   }
 
-  if (error_type === 'client_error' && isDeniedByClient(error_code)) {
-    return USER_DENIED;
-  }
-
-  if (error_type === 'api_error' && isDeniedByAPI(error_code)) {
-    return USER_DENIED;
-  }
-
-  if (error_type === 'client_error' && error_code === 1 && msgs.some(isNetworkReason)) {
+  if (msgs.some(isNetworkReason)) {
     return NETWORK_ERROR;
   }
 
@@ -126,7 +132,7 @@ export const castError = (unsafe?: Record<string, unknown>): ErrorData => {
 };
 
 export const pluginError = (send: VKBridgeSend): VKBridgeSend => {
-  return (method, params) => {
+  return (method: string, params: Record<string, unknown> = {}) => {
     return send(method, params).catch((ex) => {
       throw castError(ex);
     });

@@ -29,7 +29,7 @@ const sendJSONP = (params: Record<string, unknown>) => {
   return new Promise<any>((resolve, reject) => {
     const id = nextId();
 
-    const apiParams = params as VKBridgeMethodParams<'VKWebAppCallAPIMethod'>;
+    const apiParams = params as VKBridgeMethodParams<'VKWebAppCallAPIMethod'>[0];
     const requestParams = stringifyParams(apiParams.params);
 
     const src = `https://api.vk.com/method/${apiParams.method}?${requestParams}&callback=__awaiters.${id}`;
@@ -86,7 +86,7 @@ const sendJSONP = (params: Record<string, unknown>) => {
 };
 
 export const pluginJSONP = (send: VKBridgeSend): VKBridgeSend => {
-  return (method, params) => {
+  return (method: string, params: Record<string, unknown> = {}) => {
     if (method === 'VKWebAppCallAPIMethod') {
       const safe: Record<string, unknown> = params == null ? {} : params;
 

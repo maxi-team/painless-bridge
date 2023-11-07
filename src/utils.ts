@@ -1,4 +1,4 @@
-import type { ErrorData, VKBridgeEvent, VKBridgeMethod } from './types/data.js';
+import type { ErrorData, VKBridgeEvent } from './types/data.js';
 import type { AnyHandler } from './types/common.js';
 
 import { supports } from './bridge.js';
@@ -29,7 +29,7 @@ export const isBridgeEvent = (event?: unknown | null): event is VKBridgeEvent =>
 
 /** Checks if method is  */
 export const assertSupport = (method: string): void | never => {
-  if (!supports(method as VKBridgeMethod<any>)) {
+  if (!supports(method)) {
     throw UNSUPPORTED_PLATFORM;
   }
 };

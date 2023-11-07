@@ -1,5 +1,5 @@
 import type { AnyHandler } from './types/common.js';
-import type { VKBridgeEvent, VKBridgeSend, VKBridgeSubscribeHandler, VKBridgeSupports } from './types/data.js';
+import type { VKBridgeEvent, VKBridgeSend, VKBridgeSubscribeHandler, VKBridgeSupports, VKBridgeUnknownEvent } from './types/data.js';
 
 import { assertSupport, awaiters, isBridgeError, isBridgeEvent, nextId } from './utils.js';
 import { painless } from './painless.js';
@@ -11,8 +11,14 @@ const android = context.AndroidBridge;
 /** IOS VK Bridge interface. */
 const ios = context.webkit && context.webkit.messageHandlers;
 
+/** ReactNative Webview Interface. */
+const rn = context.ReactNativeWebView;
+
 /** Native VK Bridge interface. */
 const native = android || ios;
+
+/** CustomEvent name. */
+const custom = 'VKWebAppEvent';
 
 /** WebSDK methods */
 const methods: string[] = [];
@@ -34,7 +40,7 @@ const supports: VKBridgeSupports = (() => {
   }
 
   return (method: string) => {
-    return methods.includes(method);
+    return methods.length === 0 ? typeof method === 'string' : methods.includes(method);
   };
 })();
 
@@ -44,36 +50,49 @@ const emit = (event: VKBridgeEvent) => {
     return;
   }
 
-  const type = event.detail.type;
-  const payload = event.detail.data;
+  const { type, data } = (event as VKBridgeUnknownEvent).detail;
 
   if (type === 'VKWebAppSettings') {
-    target = (payload.frameId as string) || target;
+    target = (data.frameId as string) || (data.webFrameId as string) || target;
   }
 
   if (type === 'SetSupportedHandlers') {
-    methods.push.apply(methods, payload.supportedHandlers as string[]);
+    methods.push.apply(methods, data.supportedHandlers as string[]);
   }
 
-  const id = payload.request_id as string;
+  const id = data.request_id as string;
 
   const awaiter = awaiters.get(id);
 
   if (awaiter != null) {
-    awaiter(payload);
+    awaiter(data);
     awaiters.delete(id);
   }
 
-  if (handlers.length > 0) {
-    handlers.slice(0).forEach((handler) => {
-      handler(event);
-    });
-  }
+  handlers.slice(0).forEach((handler) => {
+    handler(event);
+  });
 };
 
 // Subscribe to events
 if (native) {
-  context.addEventListener('VKWebAppEvent', emit as unknown as EventListener);
+  context.addEventListener(custom, emit as unknown as EventListener);
+} else if (rn) {
+  context.document.addEventListener(custom, (event) => {
+    const detail: Record<string, unknown> = {};
+
+    if ('data' in event) {
+      const cast = event as MessageEvent<unknown>;
+
+      try {
+        Object.assign(detail, typeof cast.data === 'string' ? JSON.parse(cast.data) : cast.data);
+      } catch {
+        // Ignore
+      }
+    }
+
+    emit({ detail: detail as any });
+  });
 } else {
   context.addEventListener('message', (event) => {
     emit({ detail: event.data });
@@ -118,6 +137,15 @@ export const invoke = (() => {
     };
   }
 
+  if (rn) {
+    return (method: string, params: Record<string, unknown>) => {
+      rn.postMessage(JSON.stringify({
+        handler: method,
+        params
+      }));
+    };
+  }
+
   return (handler: string, params: Record<string, unknown>) => {
     context.parent.postMessage({
       type: 'vk-connect',
@@ -139,8 +167,8 @@ const createAwaiter = (resolve: AnyHandler, reject: AnyHandler) => {
   };
 };
 
-const send: VKBridgeSend = (method, params) => {
-  return new Promise((resolve, reject) => {
+const send: VKBridgeSend = (method: string, params: Record<string, unknown> = {}) => {
+  return new Promise<Record<string, unknown>>((resolve, reject) => {
     const safe = Object.assign({ request_id: nextId() }, params);
 
     awaiters.set(safe.request_id, createAwaiter(resolve as AnyHandler, reject));
@@ -156,6 +184,24 @@ const send: VKBridgeSend = (method, params) => {
  */
 const isWebView = () => {
   return !!native;
+};
+
+/**
+ * Checks whether the runtime is a WebView-like.
+ *
+ * @returns Result of checking.
+ */
+const isWebViewLike = () => {
+  return !!native || !!rn;
+};
+
+/**
+ * Checks whether the runtime is a ReactNative.
+ *
+ * @returns Result of checking.
+ */
+const isReactNative = () => {
+  return !!rn;
 };
 
 /**
@@ -223,16 +269,17 @@ const createBridge = () => {
 const bridge = createBridge();
 
 export {
-  painlessSend as send,
-  subscribe,
-  unsubscribe,
-  supports,
-  isWebView,
-  isIframe,
-  isEmbedded,
-  isStandalone,
-
   bridge,
   createBridge,
-  sendPromise
+  isEmbedded,
+  isIframe,
+  isReactNative,
+  isStandalone,
+  isWebView,
+  isWebViewLike,
+  painlessSend as send,
+  sendPromise,
+  subscribe,
+  supports,
+  unsubscribe
 };

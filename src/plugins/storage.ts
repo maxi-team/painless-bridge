@@ -1,7 +1,7 @@
 import type { VKBridgeMethodResult, VKBridgeSend } from '../types/data.js';
 
 export const pluginStorage = (send: VKBridgeSend): VKBridgeSend => {
-  return (method, params) => {
+  return (method: string, params: Record<string, unknown> = {}) => {
     if (method === 'VKWebAppStorageGet') {
       return send(method, params).then((payload) => {
         return Promise.all((payload as VKBridgeMethodResult<'VKWebAppStorageGet'>).keys.map((pair) => {

@@ -386,7 +386,8 @@ export type AppCloseStatus = 'success' | 'failed';
 export type CommunityTokenRequestOptions = {
   app_id: number;
   group_id: number;
-  scope: CommunityAuthScope | string;
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  scope: CommunityAuthScope | (string & {});
 };
 
 export type MessageRequestOptions = {
@@ -471,7 +472,8 @@ export type WallPostRequestOptions = {
    * List of services or websites the update will be exported to, if the user has so requested.
    * Sample values: 'twitter', 'facebook'
    */
-  services?: 'twitter' | 'facebook' | string;
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  services?: 'twitter' | 'facebook' | (string & {});
   /** Publication date (in Unix time). If used, posting will be delayed until the set time */
   publish_date?: number;
   /**
@@ -911,7 +913,8 @@ export type ShowSlidesSheetRequest = {
   slides: ActionSheetSlide[];
 };
 
-type TranslationLanguage = 'ru' | 'en' | 'es' | 'pt' | string;
+// eslint-disable-next-line @typescript-eslint/ban-types
+type TranslationLanguage = 'ru' | 'en' | 'es' | 'pt' | (string & {});
 
 export type TranslateResponse = {
   result: {
@@ -1046,7 +1049,8 @@ export type RequestPropsMap = {
   VKWebAppCopyText: { text: string };
   VKWebAppCreateHash: CreateHashRequest;
   VKWebAppDownloadFile: { url: string; filename: string };
-  VKWebAppGetAuthToken: { app_id: number; scope: PersonalAuthScope | string };
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  VKWebAppGetAuthToken: { app_id: number; scope: PersonalAuthScope | (string & {}) };
   VKWebAppClose: { status: AppCloseStatus; payload?: any };
   VKWebAppOpenApp: { app_id: number; location?: string };
   VKWebAppDenyNotifications: Record<string, unknown>;
@@ -1078,7 +1082,8 @@ export type RequestPropsMap = {
   VKWebAppSetViewSettings: {
     status_bar_style: AppearanceType;
     /** Android only */
-    action_bar_color?: 'none' | string;
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    action_bar_color?: 'none' | (string & {});
     /** Android only */
     navigation_bar_color?: string;
   };
@@ -1732,16 +1737,28 @@ type CombineReceiveEventMap<Union> = (
   ? FlatMap<Intersection & Union>
   : never;
 
-type ReceiveEventMapDetail = CombineReceiveEventMap<{
-  [T in keyof ReceiveEventMap]: {
-    [TT in ReceiveEventMap[T]['result']]: T extends keyof ReceiveDataMap ? {
+type ReceiveEventMapType = Exclude<keyof ReceiveDataMap, keyof ReceiveEventMap>;
+type ReceiveDataMapType = Exclude<keyof ReceiveEventMap, ReceiveEventMapType>;
+
+type ReceiveEventMapDetail = {
+  [T in ReceiveEventMapType]: {
+    detail: {
+      type: T;
+      data: FlatMap<ReceiveDataMap[T]>;
+    };
+  }
+};
+
+type ReceiveDataMapDetail = {
+  [T in ReceiveDataMapType]: {
+    [TT in ReceiveEventMap[T]['result']]: {
       detail: {
         type: TT;
         data: FlatMap<ReceiveDataMap[T] & {
           request_id?: string | undefined;
         }>;
       };
-    } : never;
+    }
   } & {
     [TT in ReceiveEventMap[T]['failed']]: {
       detail: {
@@ -1749,10 +1766,12 @@ type ReceiveEventMapDetail = CombineReceiveEventMap<{
         data: ErrorData;
       };
     }
-  };
-}[keyof ReceiveEventMap]>;
+  }
+}[ReceiveDataMapType];
 
-export type VKBridgeEvent = ReceiveEventMapDetail[keyof ReceiveEventMapDetail];
+type ReceiveEventDataMap = CombineReceiveEventMap<ReceiveEventMapDetail | ReceiveDataMapDetail>;
+
+export type VKBridgeEvent = ReceiveEventDataMap[keyof ReceiveEventDataMap];
 
 export type VKBridgeUnknownEvent = {
   detail: {

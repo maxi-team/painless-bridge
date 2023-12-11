@@ -65,12 +65,12 @@ const sendJSONP = (params: Record<string, unknown>) => {
     awaiters[id] = (payload: Record<string, unknown>) => {
       awaiters[id] = null;
 
-      const safePayload = payload || {};
+      const safePayload = Object.assign({}, payload);
 
       if ('response' in safePayload) {
         onsuccess(safePayload);
       } else {
-        onerror(safePayload.error as Record<string, unknown> || {});
+        onerror(Object.assign({}, safePayload.error));
       }
     };
 

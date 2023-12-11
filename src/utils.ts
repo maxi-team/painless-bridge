@@ -7,23 +7,26 @@ import { UNSUPPORTED_PLATFORM } from './plugins/error.js';
 // Generate unique ids
 let counter = 0;
 
-export const nextId = () => `_${++counter}`;
+const hash = (value: number, start: number, end: number) => value.toString(32).slice(start, end);
+
+export const nextId = () =>
+  `${++counter}-${hash(Date.now(), 5, 9)}-${hash(Math.random(), 2, 6)}`;
 
 // For internal use only
 export const awaiters = new Map<string, AnyHandler>();
 
 // For internal use only
-const isObject = (obj?: unknown | null): obj is Record<string, unknown> => {
+const isObject = (obj?: unknown): obj is Record<string, unknown> => {
   return typeof obj === 'object' && obj != null;
 };
 
 /** Checks if event is ErrorData */
-export const isBridgeError = (payload?: unknown | null): payload is ErrorData => {
+export const isBridgeError = (payload?: unknown): payload is ErrorData => {
   return isObject(payload) && isObject(payload.error_data);
 };
 
 /** Checks if event is VKBridgeEvent */
-export const isBridgeEvent = (event?: unknown | null): event is VKBridgeEvent => {
+export const isBridgeEvent = (event?: unknown): event is VKBridgeEvent => {
   return isObject(event) && isObject(event.detail) && isObject(event.detail.data);
 };
 

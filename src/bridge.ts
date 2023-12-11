@@ -138,9 +138,9 @@ export const invoke = (() => {
   }
 
   if (rn) {
-    return (method: string, params: Record<string, unknown>) => {
+    return (handler: string, params: Record<string, unknown>) => {
       rn.postMessage(JSON.stringify({
-        handler: method,
+        handler,
         params
       }));
     };
@@ -160,10 +160,12 @@ export const invoke = (() => {
 const createAwaiter = (resolve: AnyHandler, reject: AnyHandler) => {
   return (payload: Record<string, unknown>) => {
     if (isBridgeError(payload)) {
-      return reject(payload);
+      reject(payload);
+
+      return;
     }
 
-    return resolve(payload);
+    resolve(payload);
   };
 };
 
@@ -223,12 +225,30 @@ const isEmbedded = () => {
 };
 
 /**
+ * Checks whether the runtime is embedded-like.
+ *
+ * @returns Result of checking.
+ */
+const isEmbeddedLike = () => {
+  return isWebViewLike() || isIframe();
+};
+
+/**
  * Checks whether the runtime is standalone.
  *
  * @returns Result of checking.
  */
 const isStandalone = () => {
   return !isEmbedded();
+};
+
+/**
+ * Checks whether the runtime is standalone.
+ *
+ * @returns Result of checking.
+ */
+const isStandaloneLike = () => {
+  return !isEmbeddedLike();
 };
 
 /**
@@ -272,9 +292,11 @@ export {
   bridge,
   createBridge,
   isEmbedded,
+  isEmbeddedLike,
   isIframe,
   isReactNative,
   isStandalone,
+  isStandaloneLike,
   isWebView,
   isWebViewLike,
   painlessSend as send,

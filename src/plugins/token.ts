@@ -24,20 +24,26 @@ const isScopeIdentical = (requested: string, received: string) => {
 const createTokenAwaiter = (params: Record<string, unknown>, resolve: AnyHandler, reject: AnyHandler) => {
   return (payload: Record<string, unknown>) => {
     if (isBridgeError(payload)) {
-      return reject(payload);
+      reject(payload);
+
+      return;
     }
 
     if (!payload.access_token) {
-      return reject(USER_DENIED);
+      reject(USER_DENIED);
+
+      return;
     }
 
     if (!isScopeIdentical(params.scope as string, payload.scope as string)) {
-      return reject(USER_DENIED);
+      reject(USER_DENIED);
+
+      return;
     }
 
     payload.scope = params.scope;
 
-    return resolve(payload);
+    resolve(payload);
   };
 };
 

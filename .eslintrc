@@ -6,16 +6,14 @@
     "tsconfigRootDir": "."
   },
   "rules": {
-    "capitalized-comments": "off",
-    "multiline-comment-style": "off",
-    "no-cond-assign": "off",
-    "prefer-promise-reject-errors": "off",
-    "line-comment-position": "off",
-    "no-inline-comments": "off",
-    "@typescript-eslint/promise-function-async": "off",
-    "@typescript-eslint/no-throw-literal": "off",
-    "@typescript-eslint/no-shadow": "off",
-    "sonarjs/no-nested-template-literals": "off",
-    "unicorn/require-post-message-target-origin": "off"
+    "capitalized-comments": 0,
+    "line-comment-position": 0,
+    "multiline-comment-style": 0,
+    "prefer-spread": 0,
+    "prefer-promise-reject-errors": 0,
+    "sonarjs/no-nested-template-literals": 0,
+    "@typescript-eslint/no-throw-literal": 0,
+    "@typescript-eslint/promise-function-async": 0,
+    "@typescript-eslint/no-unnecessary-condition": 0
   }
 }

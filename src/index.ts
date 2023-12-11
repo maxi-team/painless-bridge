@@ -1,15 +1,18 @@
 export {
   isEmbedded,
+  isEmbeddedLike,
   isIframe,
+  isReactNative,
   isStandalone,
+  isStandaloneLike,
   isWebView,
+  isWebViewLike,
   send,
   subscribe,
-  unsubscribe,
   supports,
+  unsubscribe,
 
   bridge,
-  bridge as default,
   createBridge,
   sendPromise
 } from './bridge.js';

@@ -1,11 +1,13 @@
 .DS_Store
-tsconfig.json
-vite.config.ts
 .editorconfig
 .eslintcache
 .eslintignore
 .eslintrc
-yarn.lock
+.yarn/
+.yarnrc.yml
+docs/
 node_modules/
 src/
-docs/
+tsconfig.json
+vite.config.ts
+yarn.lock
